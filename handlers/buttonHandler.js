@@ -853,7 +853,7 @@ async function acceptMarriage(client, interaction, data) {
     const name2 = (targetMember?.displayName || targetId).slice(0, 45);
     const channelName = `${name1} <3 ${name2}`;
 
-    // Создаём любовную комнату (только на двоих, посторонние зайти не смогут)
+    // Создаём любовную комнату (everyone может просматривать, но заходить могут только супруги)
     let channel;
     try {
         channel = await guild.channels.create({
@@ -862,9 +862,9 @@ async function acceptMarriage(client, interaction, data) {
             parent: config.MARRIAGE.LOVE_CATEGORY,
             userLimit: 2,
             permissionOverwrites: [
-                { id: guild.id, deny: ['Connect', 'ViewChannel'] },
-                { id: buyerId, allow: ['Connect', 'ViewChannel'] },
-                { id: targetId, allow: ['Connect', 'ViewChannel'] }
+                { id: guild.id, allow: ['ViewChannel'], deny: ['Connect'] },
+                { id: buyerId, allow: ['Connect', 'ViewChannel', 'ManageChannels', 'MuteMembers', 'DeafenMembers', 'MoveMembers'] },
+                { id: targetId, allow: ['Connect', 'ViewChannel', 'ManageChannels', 'MuteMembers', 'DeafenMembers', 'MoveMembers'] }
             ]
         });
     } catch (error) {
@@ -1569,14 +1569,24 @@ async function robberyFight(client, interaction) {
 async function getActiveRoomForUser(db, guild, userId) {
     const nowSec = Math.floor(Date.now() / 1000);
 
-    // 1. Проверяем личную комнату из подписок
-    const subscription = await db.get(
+    // 1. Проверяем личную комнату из подписок (сначала активные по времени, если нет - берем последнюю запись пользователя)
+    let subscription = await db.get(
         'SELECT * FROM subscriptions WHERE user_id = ? AND type = ? AND expires_at > ? ORDER BY id DESC LIMIT 1',
         userId, 'private_room', nowSec
     );
 
+    if (!subscription) {
+        subscription = await db.get(
+            'SELECT * FROM subscriptions WHERE user_id = ? AND type = ? ORDER BY id DESC LIMIT 1',
+            userId, 'private_room'
+        );
+    }
+
     if (subscription && subscription.channel_id) {
-        const channel = await guild.channels.fetch(subscription.channel_id).catch(() => null);
+        let channel = guild.channels.cache.get(subscription.channel_id);
+        if (!channel) {
+            channel = await guild.channels.fetch(subscription.channel_id).catch(() => null);
+        }
         if (channel) {
             return {
                 channel,
@@ -1595,7 +1605,10 @@ async function getActiveRoomForUser(db, guild, userId) {
     );
 
     if (marriage && marriage.channel_id) {
-        const channel = await guild.channels.fetch(marriage.channel_id).catch(() => null);
+        let channel = guild.channels.cache.get(marriage.channel_id);
+        if (!channel) {
+            channel = await guild.channels.fetch(marriage.channel_id).catch(() => null);
+        }
         if (channel) {
             return {
                 channel,
@@ -1688,7 +1701,10 @@ async function showRoomKickMenu(interaction, channelId, ownerId) {
 }
 
 async function closeRoom(interaction, channelId, ownerId) {
-    const channel = await interaction.guild.channels.fetch(channelId).catch(() => null);
+    let channel = interaction.guild.channels.cache.get(channelId);
+    if (!channel) {
+        channel = await interaction.guild.channels.fetch(channelId).catch(() => null);
+    }
     
     if (!channel) {
         return interaction.reply({
@@ -1697,28 +1713,30 @@ async function closeRoom(interaction, channelId, ownerId) {
         });
     }
     
-    // Проверяем текущее состояние комнаты (закрыта или открыта)
-    const currentOverwrite = channel.permissionOverwrites.cache.get(interaction.guild.id);
-    const roomIsLocked = currentOverwrite?.deny.has('Connect') === true;
+    // Проверяем текущее состояние закрытия для @everyone
+    const everyoneOverwrite = channel.permissionOverwrites.cache.get(interaction.guild.id);
+    const roomIsLocked = everyoneOverwrite?.deny?.has('Connect') === true;
     
     if (roomIsLocked) {
-        // Открываем комнату (убираем запрет на вход для @everyone)
+        // Открываем комнату: разрешаем вход всем (@everyone Connect: true или null)
         await channel.permissionOverwrites.edit(interaction.guild.id, {
-            Connect: null
+            Connect: true,
+            ViewChannel: true
         });
         
         await interaction.reply({
-            content: '🔓 **Комната открыта!** Теперь другие участники могут заходить.',
+            content: '🔓 **Комната открыта!** Теперь другие участники сервера могут заходить в неё.',
             ephemeral: true
         });
     } else {
-        // Закрываем комнату (запрещаем вход для @everyone)
+        // Закрываем комнату: запрещаем Connect для @everyone
         await channel.permissionOverwrites.edit(interaction.guild.id, {
-            Connect: false
+            Connect: false,
+            ViewChannel: true
         });
         
         await interaction.reply({
-            content: '🔒 **Комната закрыта!** Участники внутри остаются, а новые не смогут зайти.',
+            content: '🔒 **Комната закрыта!** Новые участники не смогут войти без разрешения владельца.',
             ephemeral: true
         });
     }
