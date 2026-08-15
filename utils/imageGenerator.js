@@ -656,10 +656,10 @@ async function renderShop(balance, shopItems, hasActiveSubscription) {
     ctx.fillStyle = '#141416';
     ctx.fill();
 
-    await drawIcon(ctx, 'coins', M + 20, balY + 16, 20);
+    await drawIcon(ctx, 'coins', M + 20, balY + 9, 18);
     ctx.fillStyle = '#6A6A70';
     ctx.font = '11px "PP Neue Montreal", "Arial"';
-    ctx.fillText('ВАШ БАЛАНС', M + 48, balY + 28);
+    ctx.fillText('ВАШ БАЛАНС', M + 44, balY + 23);
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 20px "PP Neue Montreal Bold", "Arial"';
     ctx.fillText(`${formatNum(balance)} ЭП`, M + 20, balY + 44);

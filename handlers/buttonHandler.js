@@ -527,8 +527,17 @@ async function showNameModal(interaction, colorHex, colorName, userId, rolePrice
         .setMaxLength(32)
         .setMinLength(2)
         .setRequired(true);
+
+    const hoistInput = new TextInputBuilder()
+        .setCustomId('role_hoist')
+        .setLabel('Отображать отдельно в списке? (да/нет)')
+        .setPlaceholder('Введи "да" или "нет"')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(3)
+        .setRequired(false);
       
     const firstActionRow = new ActionRowBuilder().addComponents(nameInput);
+    const secondActionRow = new ActionRowBuilder().addComponents(hoistInput);
     
     modal.addComponents(firstActionRow, secondActionRow);
     
@@ -536,20 +545,30 @@ async function showNameModal(interaction, colorHex, colorName, userId, rolePrice
 }
 
 async function createCustomRole(client, interaction, colorHex, colorName, userId, rolePrice, roleName, hoist) {
-    await interaction.deferReply({ ephemeral: true });
+    if (!interaction.deferred && !interaction.replied) {
+        await interaction.deferReply({ ephemeral: true });
+    }
     
     try {
         const db = getDb();
         const member = await interaction.guild.members.fetch(userId);
+        const isHoist = hoist && (hoist.toLowerCase() === 'да' || hoist.toLowerCase() === 'yes');
         
         const role = await interaction.guild.roles.create({
             name: roleName,
             color: colorHex,
+            hoist: isHoist,
             reason: `Куплена пользователем ${member.displayName} за ${rolePrice} экзпоинтов`
         });
         
         const botRole = interaction.guild.members.me.roles.highest;
-        await role.setPosition(botRole.position - 1);
+        if (role.position < botRole.position) {
+            try {
+                await role.setPosition(botRole.position - 1);
+            } catch (posErr) {
+                console.warn('Не удалось изменить позицию роли:', posErr.message);
+            }
+        }
         await member.roles.add(role);
         
         await db.run('INSERT INTO user_roles (user_id, role_id, role_name, color_hex, total_invested) VALUES (?, ?, ?, ?, ?)',
@@ -563,13 +582,13 @@ async function createCustomRole(client, interaction, colorHex, colorName, userId
         ]);
         
         await interaction.editReply({
-            content: `**Кастомная роль успешно создана!**\n\nНазвание: ${roleName}\nЦвет: ${colorName}\nТвоя роль: ${role.toString()}`,
+            content: `✅ **Кастомная роль успешно создана!**\n\nНазвание: **${roleName}**\nЦвет: **${colorName}**\nТвоя роль: ${role.toString()}`,
             ephemeral: true
         });
         
     } catch (error) {
         console.error('Ошибка при создании роли:', error);
-        await interaction.editReply({ content: `❌ Ошибка: ${error.message}`, ephemeral: true });
+        await interaction.editReply({ content: `❌ Ошибка при создании роли: ${error.message}`, ephemeral: true });
     }
 }
 

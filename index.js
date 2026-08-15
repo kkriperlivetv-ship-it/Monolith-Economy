@@ -176,8 +176,15 @@ async function init() {
                             });
                         }
                         
-                        const roleName = interaction.fields.getTextInputValue('role_name');
-                        const hoist = interaction.fields.getTextInputValue('role_hoist') || 'нет';
+                        let roleName = '';
+                        try {
+                            roleName = interaction.fields.getTextInputValue('role_name');
+                        } catch (e) {}
+                        
+                        let hoist = 'нет';
+                        try {
+                            hoist = interaction.fields.getTextInputValue('role_hoist') || 'нет';
+                        } catch (e) {}
                         
                         await createCustomRole(client, interaction, colorHex, colorName, userId, parseInt(rolePrice), roleName, hoist);
                         return;
