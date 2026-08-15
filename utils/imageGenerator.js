@@ -50,7 +50,59 @@ const ICON_PATHS = {
     level:      path.join(__dirname, '../assets/icons/level.svg'),
     message:    path.join(__dirname, '../assets/icons/message.svg'),
     microphone: path.join(__dirname, '../assets/icons/microphone.svg'),
+    fire:       path.join(__dirname, '../assets/icons/fire.svg'),
+    coins:      path.join(__dirname, '../assets/icons/coins.svg'),
+    gift:       path.join(__dirname, '../assets/icons/gift.svg'),
+    user:       path.join(__dirname, '../assets/icons/user.svg'),
+    house:      path.join(__dirname, '../assets/icons/house.svg'),
+    role:       path.join(__dirname, '../assets/icons/role.svg'),
+    ring:       path.join(__dirname, '../assets/icons/ring.svg'),
+    slots:      path.join(__dirname, '../assets/icons/slots.svg'),
+    diamond:    path.join(__dirname, '../assets/icons/diamond.svg'),
+    seven:      path.join(__dirname, '../assets/icons/seven.svg'),
+    cherry:     path.join(__dirname, '../assets/icons/cherry.svg'),
+    lemon:      path.join(__dirname, '../assets/icons/lemon.svg'),
+    star:       path.join(__dirname, '../assets/icons/star.svg'),
+    bell:       path.join(__dirname, '../assets/icons/bell.svg'),
+    eagle:      path.join(__dirname, '../assets/icons/eagle.svg'),
+    coin:       path.join(__dirname, '../assets/icons/coin.svg'),
+    target:     path.join(__dirname, '../assets/icons/target.svg'),
+    dice:       path.join(__dirname, '../assets/icons/dice.svg'),
+    bot:        path.join(__dirname, '../assets/icons/bot.svg'),
+    ruler:      path.join(__dirname, '../assets/icons/ruler.svg'),
+    trend_up:   path.join(__dirname, '../assets/icons/trend_up.svg'),
+    trend_down: path.join(__dirname, '../assets/icons/trend_down.svg'),
+    bet:        path.join(__dirname, '../assets/icons/bet.svg'),
 };
+
+const EMOJI_TO_ICON = {
+    '🔥': 'fire',
+    '💰': 'coins',
+    '💸': 'bet',
+    '🎁': 'gift',
+    '👤': 'user',
+    '🏠': 'house',
+    '🎭': 'role',
+    '💍': 'ring',
+    '🎰': 'slots',
+    '💎': 'diamond',
+    '7️⃣': 'seven',
+    '🍒': 'cherry',
+    '🍋': 'lemon',
+    '⭐': 'star',
+    '🔔': 'bell',
+    '🦅': 'eagle',
+    '🪙': 'coin',
+    '🎯': 'target',
+    '🎲': 'dice',
+    '🤖': 'bot',
+    '📏': 'ruler',
+    '📈': 'trend_up',
+    '📉': 'trend_down',
+    'role_custom': 'role',
+    'private_room': 'house'
+};
+
 const _iconCache = {};
 
 // ================================================================
@@ -128,12 +180,18 @@ async function drawSvgIcon(ctx, iconName, x, y, size) {
     try {
         if (!_iconCache[iconName]) {
             _iconCache[iconName] = await loadImageFromFile(ICON_PATHS[iconName]);
-            console.log(`✅ Иконка "${iconName}" загружена: ${ICON_PATHS[iconName]}`);
         }
         ctx.drawImage(_iconCache[iconName], x, y, size, size);
     } catch (e) {
         console.error(`❌ Ошибка загрузки иконки "${iconName}" (${ICON_PATHS[iconName]}):`, e.message);
-        // Тихий fallback — иконка просто не рисуется
+    }
+}
+
+// Универсальная отрисовка иконки (по имени или эмодзи)
+async function drawIcon(ctx, iconNameOrEmoji, x, y, size) {
+    const iconName = EMOJI_TO_ICON[iconNameOrEmoji] || iconNameOrEmoji;
+    if (ICON_PATHS[iconName]) {
+        await drawSvgIcon(ctx, iconName, x, y, size);
     }
 }
 
@@ -171,30 +229,30 @@ async function drawRightCardBig(ctx, x, y, w, h, iconName, label, value) {
 
 // ================================================================
 // УНИВЕРСАЛЬНАЯ КАРТОЧКА (масштабируется по высоте h)
-// При h=155 даёт те же размеры, что и профиль.
 // ================================================================
-function drawCard(ctx, x, y, w, h, card) {
+async function drawCard(ctx, x, y, w, h, card) {
     roundRect(ctx, x, y, w, h, 16);
     ctx.fillStyle = '#141416';
     ctx.fill();
 
     const p = h / 155;
-    const iconY = y + Math.round(38 * p);
+    const iconY = y + Math.round(22 * p);
     const valY  = y + Math.round(88 * p);
     const subY  = y + Math.round(132 * p);
-    const icoSz = Math.max(13, Math.round(17 * p));
+    const icoSz = Math.max(16, Math.round(20 * p));
     const lblSz = Math.max(9,  Math.round(11 * p));
     const valSz = Math.max(16, Math.round(28 * p));
     const subSz = Math.max(10, Math.round(12 * p));
 
-    ctx.font = `${icoSz}px "Segoe UI Emoji", "Arial", sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#CCCCCC';
-    ctx.fillText(card.icon, x + 20, iconY);
+    if (card.icon) {
+        await drawIcon(ctx, card.icon, x + 20, iconY, icoSz);
+    }
 
     ctx.fillStyle = '#6A6A70';
     ctx.font = `${lblSz}px "PP Neue Montreal", "Arial"`;
-    ctx.fillText(card.label, x + 46, iconY - 1);
+    ctx.textAlign = 'left';
+    const labelX = card.icon ? x + 20 + icoSz + 8 : x + 20;
+    ctx.fillText(card.label, labelX, iconY + icoSz * 0.78);
 
     ctx.fillStyle = '#FFFFFF';
     ctx.font = `bold ${valSz}px "PP Neue Montreal Bold", "Arial"`;
@@ -212,20 +270,20 @@ function drawCard(ctx, x, y, w, h, card) {
 // ================================================================
 // КАРТОЧКА МАГАЗИНА (с центрированием контента)
 // ================================================================
-function drawShopCard(ctx, x, y, w, h, item, isActive) {
+async function drawShopCard(ctx, x, y, w, h, item, isActive) {
     roundRect(ctx, x, y, w, h, 16);
     ctx.fillStyle = '#141416';
     ctx.fill();
 
     // Иконка
-    ctx.font = '42px "Segoe UI Emoji", "Arial", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#DDDDDD';
-    ctx.fillText(item.emoji, x + w / 2, y + 62);
+    const iconName = EMOJI_TO_ICON[item.id] || EMOJI_TO_ICON[item.emoji] || 'gift';
+    const icoSz = 44;
+    await drawIcon(ctx, iconName, x + Math.round((w - icoSz) / 2), y + 24, icoSz);
 
-    const cleanName = truncate(item.name, 24);
+    const cleanName = truncate(item.name.replace(/^[^\w\sа-яА-ЯёЁ]+/, '').trim(), 24);
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 17px "PP Neue Montreal Bold", "Arial"';
+    ctx.textAlign = 'center';
     ctx.fillText(cleanName, x + w / 2, y + 100);
 
     // Описание
@@ -330,12 +388,14 @@ async function renderProfile(userData) {
     ctx.fillText(truncate(userData.username, 16), NX, LY + 158);
 
     // Статус брака рядом с никнеймом
-    ctx.font = '18px "Segoe UI Emoji", "Arial", sans-serif';
     if (userData.marriagePartner) {
+        await drawIcon(ctx, 'ring', NX, LY + 178, 20);
         ctx.fillStyle = '#FF69B4';
-        ctx.fillText(`💍 В браке с ${truncate(userData.marriagePartner, 22)}`, NX, LY + 194);
+        ctx.font = '18px "PP Neue Montreal", "Arial"';
+        ctx.fillText(`В браке с ${truncate(userData.marriagePartner, 22)}`, NX + 26, LY + 194);
     } else {
         ctx.fillStyle = '#6A6A70';
+        ctx.font = '18px "PP Neue Montreal", "Arial"';
         ctx.fillText('Свободен', NX, LY + 194);
     }
 
@@ -407,14 +467,14 @@ async function renderDailyBonus(streak, bonus, newBalance) {
     const CW = Math.floor((TW - 20) / 2);
     const SY = 108, CH = 155;
 
-    drawCard(ctx, M, SY, CW, CH, {
-        icon: '🔥', label: 'ДЕЙЛИ СТРИК',
+    await drawCard(ctx, M, SY, CW, CH, {
+        icon: 'fire', label: 'ДЕЙЛИ СТРИК',
         value: `${streak}`,
         unit: 'дней',
         sub: 'Продолжай в том же духе!'
     });
-    drawCard(ctx, M + CW + 20, SY, CW, CH, {
-        icon: '💰', label: 'ПОЛУЧЕНО',
+    await drawCard(ctx, M + CW + 20, SY, CW, CH, {
+        icon: 'coins', label: 'ПОЛУЧЕНО',
         value: `+${formatNum(bonus)}`,
         unit: 'ЭП',
         sub: `Баланс: ${formatNum(newBalance)} ЭП`
@@ -454,11 +514,11 @@ async function renderCasinoResult(gameType, bet, isWin, winAmount, details) {
 
     // Нижние карточки ставка/результат (общие для всех игр)
     const betCard = {
-        icon: '💸', label: 'СТАВКА',
+        icon: 'bet', label: 'СТАВКА',
         value: formatNum(bet), unit: 'ЭП', sub: 'экзпоинтов'
     };
     const resCard = {
-        icon: isWin ? '📈' : '📉',
+        icon: isWin ? 'trend_up' : 'trend_down',
         label: isWin ? 'ВЫИГРЫШ' : 'ПРОИГРЫШ',
         value: isWin ? `+${formatNum(winAmount)}` : `-${formatNum(bet)}`,
         unit: 'ЭП',
@@ -475,17 +535,18 @@ async function renderCasinoResult(gameType, bet, isWin, winAmount, details) {
         ctx.fillStyle = '#141416';
         ctx.fill();
 
-        // Подпись внутри карточки
+        // Иконка и подпись внутри карточки
+        await drawIcon(ctx, 'slots', M + 20, drumCardY + 16, 22);
         ctx.fillStyle = '#6A6A70';
         ctx.font = '11px "PP Neue Montreal", "Arial"';
         ctx.textAlign = 'left';
-        ctx.fillText('🎰 БАРАБАНЫ', M + 20, drumCardY + 30);
+        ctx.fillText('БАРАБАНЫ', M + 48, drumCardY + 31);
 
         if (details.winDescription) {
             ctx.fillStyle = '#FFFFFF';
             ctx.font = 'bold 13px "PP Neue Montreal Bold", "Arial"';
             ctx.textAlign = 'right';
-            ctx.fillText(truncate(details.winDescription, 42), M + TW - 20, drumCardY + 30);
+            ctx.fillText(truncate(details.winDescription, 42), M + TW - 20, drumCardY + 31);
         }
 
         // Три барабана
@@ -502,37 +563,42 @@ async function renderCasinoResult(gameType, bet, isWin, winAmount, details) {
             roundRect(ctx, dx + 4, drumY + 4, dw - 8, dh - 8, 10);
             ctx.fillStyle = '#1A1A1C';
             ctx.fill();
-            ctx.font = `${details.results[i] === '💎' ? 88 : 78}px "Segoe UI Emoji", "Arial", sans-serif`;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.textAlign = 'center';
-            ctx.fillText(details.results[i], dx + dw / 2, drumY + dh / 2 + 26);
+            
+            const symIcon = details.results[i];
+            const symSz = 64;
+            await drawIcon(ctx, symIcon, dx + Math.round((dw - symSz) / 2), drumY + Math.round((dh - symSz) / 2), symSz);
         }
 
         const bY = drumCardY + drumCardH + GAP;
         const bW = Math.floor((TW - GAP) / 2);
         const bH = 145;
-        drawCard(ctx, M, bY, bW, bH, betCard);
-        drawCard(ctx, M + bW + GAP, bY, bW, bH, resCard);
+        await drawCard(ctx, M, bY, bW, bH, betCard);
+        await drawCard(ctx, M + bW + GAP, bY, bW, bH, resCard);
         drawFooter(ctx, M, bY + bH + 26, 'КАЗИНО');
 
     // ── ОРЁЛ И РЕШКА ───────────────────────────────────────────
     } else if (gameType === 'Орёл и Решка') {
         const SY = 126, CH = 145, CW = Math.floor((TW - GAP) / 2);
 
-        drawCard(ctx, M, SY, CW, CH, {
-            icon: '🎯', label: 'ВАШ ВЫБОР',
-            value: details.choice === 'орел' ? '🦅 Орёл' : '🪙 Решка',
+        const choiceText = details.choice === 'орел' ? 'Орёл' : 'Решка';
+        const choiceIcon = details.choice === 'орел' ? 'eagle' : 'coin';
+        const resultText = details.result === 'орел' ? 'Орёл' : 'Решка';
+        const resultIcon = details.result === 'орел' ? 'eagle' : 'coin';
+
+        await drawCard(ctx, M, SY, CW, CH, {
+            icon: choiceIcon, label: 'ВАШ ВЫБОР',
+            value: choiceText,
             unit: '', sub: 'выбор сделан'
         });
-        drawCard(ctx, M + CW + GAP, SY, CW, CH, {
-            icon: '🎲', label: 'РЕЗУЛЬТАТ',
-            value: details.result === 'орел' ? '🦅 Орёл' : '🪙 Решка',
+        await drawCard(ctx, M + CW + GAP, SY, CW, CH, {
+            icon: resultIcon, label: 'РЕЗУЛЬТАТ',
+            value: resultText,
             unit: '', sub: isWin ? '✓ совпало!' : '✗ не совпало'
         });
 
         const bY = SY + CH + GAP;
-        drawCard(ctx, M, bY, CW, CH, betCard);
-        drawCard(ctx, M + CW + GAP, bY, CW, CH, resCard);
+        await drawCard(ctx, M, bY, CW, CH, betCard);
+        await drawCard(ctx, M + CW + GAP, bY, CW, CH, resCard);
         drawFooter(ctx, M, bY + CH + 26, 'КАЗИНО');
 
     // ── РАНДОМ ─────────────────────────────────────────────────
@@ -541,23 +607,23 @@ async function renderCasinoResult(gameType, bet, isWin, winAmount, details) {
         const CW3 = Math.floor((TW - GAP * 2) / 3);
         const CW2 = Math.floor((TW - GAP) / 2);
 
-        drawCard(ctx, M, SY, CW3, CH, {
-            icon: '🎯', label: 'ВАШЕ ЧИСЛО',
+        await drawCard(ctx, M, SY, CW3, CH, {
+            icon: 'target', label: 'ВАШЕ ЧИСЛО',
             value: `${details.userNumber}`, unit: '', sub: 'загадано вами'
         });
-        drawCard(ctx, M + CW3 + GAP, SY, CW3, CH, {
-            icon: '🤖', label: 'ЧИСЛО БОТА',
+        await drawCard(ctx, M + CW3 + GAP, SY, CW3, CH, {
+            icon: 'bot', label: 'ЧИСЛО БОТА',
             value: `${details.botNumber}`, unit: '', sub: 'загадано ботом'
         });
-        drawCard(ctx, M + (CW3 + GAP) * 2, SY, CW3, CH, {
-            icon: '📏', label: 'РАЗНИЦА',
+        await drawCard(ctx, M + (CW3 + GAP) * 2, SY, CW3, CH, {
+            icon: 'ruler', label: 'РАЗНИЦА',
             value: `${details.diff}`, unit: '',
             sub: details.diff === 0 ? 'точное попадание!' : 'отклонение'
         });
 
         const bY = SY + CH + GAP;
-        drawCard(ctx, M, bY, CW2, CH, betCard);
-        drawCard(ctx, M + CW2 + GAP, bY, CW2, CH, resCard);
+        await drawCard(ctx, M, bY, CW2, CH, betCard);
+        await drawCard(ctx, M + CW2 + GAP, bY, CW2, CH, resCard);
         drawFooter(ctx, M, bY + CH + 26, 'КАЗИНО');
     }
 
@@ -590,16 +656,13 @@ async function renderShop(balance, shopItems, hasActiveSubscription) {
     ctx.fillStyle = '#141416';
     ctx.fill();
 
-    ctx.font = '14px "Segoe UI Emoji", "Arial", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#CCCCCC';
-    ctx.fillText('💰', M + 20, balY + 22);
+    await drawIcon(ctx, 'coins', M + 20, balY + 16, 20);
     ctx.fillStyle = '#6A6A70';
     ctx.font = '11px "PP Neue Montreal", "Arial"';
-    ctx.fillText('ВАШ БАЛАНС', M + 40, balY + 21);
+    ctx.fillText('ВАШ БАЛАНС', M + 48, balY + 28);
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 20px "PP Neue Montreal Bold", "Arial"';
-    ctx.fillText(`${formatNum(balance)} ЭП`, M + 20, balY + 42);
+    ctx.fillText(`${formatNum(balance)} ЭП`, M + 20, balY + 44);
 
     // Карточки товаров
     const items = Object.values(shopItems);
@@ -610,7 +673,7 @@ async function renderShop(balance, shopItems, hasActiveSubscription) {
 
     for (let i = 0; i < items.length; i++) {
         const isActive = items[i].id === 'private_room' && hasActiveSubscription;
-        drawShopCard(ctx, M + i * (cw + gap), cardY, cw, cardH, items[i], isActive);
+        await drawShopCard(ctx, M + i * (cw + gap), cardY, cw, cardH, items[i], isActive);
     }
 
     drawFooter(ctx, M, cardY + cardH + 26, 'МАГАЗИН');
@@ -643,12 +706,12 @@ async function renderGift(fromUser, toUser, amount, message) {
     const CW = Math.floor((TW - GAP) / 2);
     const SY = 105, CH = 128;
 
-    drawCard(ctx, M, SY, CW, CH, {
-        icon: '👤', label: 'ОТ',
+    await drawCard(ctx, M, SY, CW, CH, {
+        icon: 'user', label: 'ОТ',
         value: truncate(fromUser, 14), unit: '', sub: 'отправитель'
     });
-    drawCard(ctx, M + CW + GAP, SY, CW, CH, {
-        icon: '🎁', label: 'КОМУ',
+    await drawCard(ctx, M + CW + GAP, SY, CW, CH, {
+        icon: 'gift', label: 'КОМУ',
         value: truncate(toUser, 14), unit: '', sub: 'получатель'
     });
 
@@ -659,13 +722,10 @@ async function renderGift(fromUser, toUser, amount, message) {
     ctx.fillStyle = '#141416';
     ctx.fill();
 
-    ctx.font = '15px "Segoe UI Emoji", "Arial", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#CCCCCC';
-    ctx.fillText('💰', M + 20, amtY + 32);
+    await drawIcon(ctx, 'coins', M + 20, amtY + 20, 20);
     ctx.fillStyle = '#6A6A70';
     ctx.font = '11px "PP Neue Montreal", "Arial"';
-    ctx.fillText('СУММА ПОДАРКА', M + 42, amtY + 31);
+    ctx.fillText('СУММА ПОДАРКА', M + 48, amtY + 32);
 
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 28px "PP Neue Montreal Bold", "Arial"';

@@ -31,7 +31,7 @@ function startDashboard(client, port = 3000) {
             const totalTxRow = await db.get('SELECT COUNT(*) as count FROM transactions');
             const totalLotteryRow = await db.get('SELECT COUNT(*) as count FROM lottery_tickets');
             const totalMarriagesRow = await db.get('SELECT COUNT(*) as count FROM marriages');
-            const totalSubsRow = await db.get('SELECT COUNT(*) as count FROM subscriptions WHERE expires_at > strftime("%s", "now") * 1000');
+            const totalSubsRow = await db.get('SELECT COUNT(*) as count FROM subscriptions WHERE expires_at > strftime("%s", "now")');
 
             res.json({
                 totalUsers: totalUsersRow?.count || 0,
