@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Economy Bot — Панель Управления</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0A0A0C;
+            --card-bg: #141417;
+            --card-border: #222227;
+            --accent: #5865F2;
+            --accent-hover: #4752C4;
+            --text-primary: #FFFFFF;
+            --text-secondary: #94949E;
+            --text-muted: #5C5C66;
+            --success: #23A55A;
+            --warning: #F0B232;
+            --danger: #F23F43;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            border-bottom: 1px solid var(--card-border);
+            background: rgba(20, 20, 23, 0.85);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #5865F2, #3B44B0);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(88, 101, 242, 0.35);
+        }
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .logo-text p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            background: var(--card-border);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--warning);
+            box-shadow: 0 0 8px currentColor;
+        }
+        .status-badge.online .status-dot { background: var(--success); color: var(--success); }
+        .status-badge.offline .status-dot { background: var(--danger); color: var(--danger); }
+        .status-badge.token_required .status-dot { background: var(--warning); color: var(--warning); }
+
+        main {
+            flex: 1;
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .alert-banner {
+            background: #18181D;
+            border: 1px solid #2D2D38;
+            border-left: 4px solid var(--accent);
+            border-radius: 12px;
+            padding: 18px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        .alert-banner h3 {
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+        .alert-banner p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .code-inline {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255,255,255,0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #E2E2E8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: #33333E;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .stat-value {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+        .stat-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 12px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.04);
+        }
+        .tab-btn.active {
+            color: #7983F5;
+            background: rgba(88, 101, 242, 0.18);
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .section-card h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+        th {
+            text-align: left;
+            padding: 12px 14px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--card-border);
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text-primary);
+        }
+        tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .cmd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .cmd-card {
+            background: #19191D;
+            border: 1px solid #282830;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .cmd-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #7983F5;
+            font-size: 14px;
+        }
+        .cmd-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+        .config-group {
+            background: #18181C;
+            border: 1px solid #26262E;
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .config-group h4 {
+            font-size: 14px;
+            color: #A0A0B0;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 13px;
+        }
+        .config-item .key {
+            color: var(--text-secondary);
+        }
+        .config-item .val {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: #FFF;
+        }
+
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--card-border);
+            padding: 18px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-group">
+            <div class="logo-icon">🪙</div>
+            <div class="logo-text">
+                <h1>Discord Economy Bot</h1>
+                <p>Панель мониторинга и состояния</p>
+            </div>
+        </div>
+        <div id="statusBadge" class="status-badge">
+            <span class="status-dot"></span>
+            <span id="statusText">Загрузка...</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="alert-banner" id="envBanner">
+            <div>
+                <h3>⚙️ Подключение к Discord</h3>
+                <p>Для подключения бота к вашему серверу укажите в настройках окружения переменные: <span class="code-inline">TOKEN</span>, <span class="code-inline">CLIENT_ID</span>, <span class="code-inline">GUILD_ID</span>.</p>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">👥 Пользователей в БД <span>💾</span></div>
+                <div class="stat-value" id="statUsers">0</div>
+                <div class="stat-sub">Зарегистрировано в экономике</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">💰 Баланс в обороте <span>🪙</span></div>
+                <div class="stat-value" id="statBalance">0 ЭП</div>
+                <div class="stat-sub">Суммарный капитал</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📜 Транзакций <span>📊</span></div>
+                <div class="stat-value" id="statTx">0</div>
+                <div class="stat-sub">Переводы, награды, казино</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">⚡ Загружено команд <span>🤖</span></div>
+                <div class="stat-value" id="statCommands">0</div>
+                <div class="stat-sub">Слэш-команд доступно</div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('overview', this)">Обзор и Статистика</button>
+            <button class="tab-btn" onclick="switchTab('commands', this)">Реестр Команд</button>
+            <button class="tab-btn" onclick="switchTab('database', this)">База Данных (SQLite)</button>
+            <button class="tab-btn" onclick="switchTab('config', this)">Конфигурация Экономики</button>
+        </div>
+
+        <!-- Tab 1: Overview -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="section-card">
+                <h2>📊 Дополнительные метрики</h2>
+                <div class="stats-grid" style="margin-top: 14px;">
+                    <div class="stat-card">
+                        <div class="stat-label">💍 Браков заключено</div>
+                        <div class="stat-value" id="statMarriages">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🎟️ Активных билетов лотереи</div>
+                        <div class="stat-value" id="statLottery">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">💎 Активных подписок</div>
+                        <div class="stat-value" id="statSubs">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">💸 Всего заработано</div>
+                        <div class="stat-value" id="statEarned">0 ЭП</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Commands -->
+        <div id="tab-commands" class="tab-content">
+            <div class="section-card">
+                <h2>🤖 Список слэш-команд</h2>
+                <div class="cmd-grid" id="commandsGrid">
+                    <div style="color: var(--text-muted);">Загрузка команд...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Database -->
+        <div id="tab-database" class="tab-content">
+            <div class="section-card">
+                <h2>🏆 Топ пользователей по балансу</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID Пользователя</th>
+                                <th>Баланс</th>
+                                <th>Уровень / XP</th>
+                                <th>Стрик</th>
+                                <th>Дуэли (W/L)</th>
+                                <th>Сообщений</th>
+                                <th>Голосовой онлайн</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Загрузка данных...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Config -->
+        <div id="tab-config" class="tab-content">
+            <div class="section-card">
+                <h2>⚙️ Параметры экономики и вознаграждений</h2>
+                <div class="config-grid" id="configGrid">
+                    <div style="color: var(--text-muted);">Загрузка конфигурации...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Discord Economy Bot • AI Studio Runtime • Node.js
+    </footer>
+
+    <script>
+        function switchTab(tabName, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            const target = document.getElementById('tab-' + tabName);
+            if (target) target.classList.add('active');
+        }
+
+        async function fetchData() {
+            try {
+                // Status
+                const statusRes = await fetch('/api/status');
+                const status = await statusRes.json();
+                const badge = document.getElementById('statusBadge');
+                const statusText = document.getElementById('statusText');
+
+                badge.className = 'status-badge ' + status.status;
+                if (status.status === 'online') {
+                    statusText.textContent = 'Онлайн: ' + status.user + ' (' + status.guildsCount + ' серверов)';
+                } else if (status.status === 'connecting') {
+                    statusText.textContent = 'Подключение к Discord...';
+                } else {
+                    statusText.textContent = 'Ожидает Discord TOKEN в .env';
+                }
+
+                document.getElementById('statCommands').textContent = status.commandsLoaded;
+
+                // Stats
+                const statsRes = await fetch('/api/stats');
+                const stats = await statsRes.json();
+                document.getElementById('statUsers').textContent = stats.totalUsers || 0;
+                document.getElementById('statBalance').textContent = (stats.circulatingBalance || 0).toLocaleString() + ' ЭП';
+                document.getElementById('statTx').textContent = stats.totalTransactions || 0;
+                document.getElementById('statMarriages').textContent = stats.totalMarriages || 0;
+                document.getElementById('statLottery').textContent = stats.activeLotteryTickets || 0;
+                document.getElementById('statSubs').textContent = stats.activeSubscriptions || 0;
+                document.getElementById('statEarned').textContent = (stats.totalEarned || 0).toLocaleString() + ' ЭП';
+
+                // Commands
+                const cmdRes = await fetch('/api/commands');
+                const cmdData = await cmdRes.json();
+                const cmdGrid = document.getElementById('commandsGrid');
+                if (cmdData.commands && cmdData.commands.length > 0) {
+                    cmdGrid.innerHTML = cmdData.commands.map(cmd => `
+                        <div class="cmd-card">
+                            <div class="cmd-name">/${cmd.name}</div>
+                            <div class="cmd-desc">${cmd.description}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    cmdGrid.innerHTML = '<div style="color: var(--text-muted);">Команды не найдены</div>';
+                }
+
+                // Users
+                const usersRes = await fetch('/api/users');
+                const usersData = await usersRes.json();
+                const usersTbody = document.getElementById('usersTableBody');
+                if (usersData.users && usersData.users.length > 0) {
+                    usersTbody.innerHTML = usersData.users.map(u => `
+                        <tr>
+                            <td style="font-family: monospace;">${u.user_id}</td>
+                            <td><strong style="color: #FFD700;">${(u.balance || 0).toLocaleString()} ЭП</strong></td>
+                            <td>${Math.floor((u.xp || 0) / 1000) + 1} (${u.xp || 0} XP)</td>
+                            <td>🔥 ${u.daily_streak || 0} дн.</td>
+                            <td>${u.total_won_duels || 0} / ${u.total_lost_duels || 0}</td>
+                            <td>💬 ${u.total_messages || 0}</td>
+                            <td>🎙️ ${Math.floor((u.total_voice_minutes || 0) / 60)} ч</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    usersTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">В базе данных пока нет пользователей. После взаимодействия с ботом в Discord они появятся здесь.</td></tr>';
+                }
+
+                // Config
+                const configRes = await fetch('/api/config');
+                const cfg = await configRes.json();
+                const cfgGrid = document.getElementById('configGrid');
+                if (cfg && cfg.economy) {
+                    cfgGrid.innerHTML = `
+                        <div class="config-group">
+                            <h4>💰 Экономика</h4>
+                            <div class="config-item"><span class="key">Макс. баланс</span><span class="val">${cfg.economy.MAX_BALANCE.toLocaleString()} ЭП</span></div>
+                            <div class="config-item"><span class="key">Макс. перевод</span><span class="val">${cfg.economy.MAX_TRANSFER.toLocaleString()} ЭП</span></div>
+                            <div class="config-item"><span class="key">Базовый дейли</span><span class="val">${cfg.economy.DAILY_BASE} ЭП</span></div>
+                            <div class="config-item"><span class="key">Бонус за стрик</span><span class="val">+${cfg.economy.DAILY_STREAK_BONUS} ЭП</span></div>
+                            <div class="config-item"><span class="key">Комиссия казино</span><span class="val">${cfg.economy.CASINO_COMMISSION * 100}%</span></div>
+                        </div>
+                        <div class="config-group">
+                            <h4>⚡ Активность</h4>
+                            <div class="config-item"><span class="key">Награда за сообщения</span><span class="val">${cfg.activity.MESSAGE_REWARD} ЭП / ${cfg.activity.MESSAGE_THRESHOLD} сообщ.</span></div>
+                            <div class="config-item"><span class="key">Лимит сообщений в день</span><span class="val">${cfg.activity.MESSAGE_LIMIT} ЭП</span></div>
+                            <div class="config-item"><span class="key">Награда за войс</span><span class="val">${cfg.activity.VOICE_REWARD} ЭП / ${cfg.activity.VOICE_THRESHOLD} мин</span></div>
+                            <div class="config-item"><span class="key">Лимит войса в день</span><span class="val">${cfg.activity.VOICE_LIMIT} ЭП</span></div>
+                        </div>
+                        <div class="config-group">
+                            <h4>🎭 Роли и Брак</h4>
+                            <div class="config-item"><span class="key">Создание роли</span><span class="val">${cfg.roles.CREATE_COST.toLocaleString()} ЭП</span></div>
+                            <div class="config-item"><span class="key">Иконка роли</span><span class="val">${cfg.roles.ICON_COST.toLocaleString()} ЭП</span></div>
+                            <div class="config-item"><span class="key">Цвет роли</span><span class="val">${cfg.roles.COLOR_COST.toLocaleString()} ЭП</span></div>
+                            <div class="config-item"><span class="key">Стоимость брака</span><span class="val">${cfg.marriage.PRICE.toLocaleString()} ЭП</span></div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Ошибка загрузки данных:', err);
+            }
+        }
+
+        fetchData();
+        setInterval(fetchData, 10000);
+    </script>
+</body>
+</html>

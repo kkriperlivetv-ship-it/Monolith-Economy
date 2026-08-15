@@ -1,0 +1,29 @@
+{
+  "name": "discord-economy-bot",
+  "version": "1.0.0",
+  "description": "Экономический бот для Discord с системой рисков и накоплений",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "echo 'Build complete'",
+    "dev": "node index.js",
+    "lint": "node --check index.js dashboard.js database.js config.js",
+    "register": "node commands/index.js"
+  },
+  "dependencies": {
+    "@discordjs/rest": "^2.6.1",
+    "canvas": "^3.2.3",
+    "discord.js": "^14.26.4",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

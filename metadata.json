@@ -1,0 +1,6 @@
+{
+  "name": "Discord Economy Bot",
+  "description": "Discord economy bot with mini-games, leveling, shop, and interactive web dashboard",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
