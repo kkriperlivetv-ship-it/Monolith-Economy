@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
 const { initDatabase } = require('./database');
 const { createEmbed } = require('./utils/embedBuilder');
+const config = require('./config');
 const buttonHandler = require('./handlers/buttonHandler');
 const messageHandler = require('./handlers/messageHandler');
 const voiceHandler = require('./handlers/voiceHandler');
@@ -349,10 +350,10 @@ async function init() {
             console.error('❌ Необработанное отклонение промиса:', error);
         });
         
-        if (process.env.TOKEN) {
+        if (config.TOKEN) {
             console.log('🔄 Подключение к Discord...');
             try {
-                await client.login(process.env.TOKEN);
+                await client.login(config.TOKEN);
             } catch (loginErr) {
                 console.error('❌ Ошибка авторизации Discord бота:', loginErr.message);
                 console.log('💡 Проверьте правильность TOKEN в настройках окружения.');

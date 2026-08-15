@@ -1,9 +1,15 @@
 require('dotenv').config();
 
+const clean = (val) => {
+    if (!val || typeof val !== 'string') return undefined;
+    const trimmed = val.trim().replace(/^["']|["']$/g, '');
+    return trimmed.length > 0 ? trimmed : undefined;
+};
+
 module.exports = {
-    TOKEN: process.env.TOKEN,
-    CLIENT_ID: process.env.CLIENT_ID,
-    GUILD_ID: process.env.GUILD_ID,
+    TOKEN: clean(process.env.TOKEN || process.env.DISCORD_TOKEN || process.env.BOT_TOKEN),
+    CLIENT_ID: clean(process.env.CLIENT_ID || process.env.DISCORD_CLIENT_ID || process.env.APPLICATION_ID),
+    GUILD_ID: clean(process.env.GUILD_ID || process.env.DISCORD_GUILD_ID || process.env.SERVER_ID),
     
     ECONOMY: {
         MAX_BALANCE: 999999,

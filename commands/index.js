@@ -1,8 +1,8 @@
-require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord.js');
+const config = require('../config');
 
 module.exports = async (client) => {
     const commands = [];
@@ -116,23 +116,27 @@ module.exports = async (client) => {
     }
     
     // Регистрация команд в Discord
-    if (!process.env.TOKEN || !process.env.CLIENT_ID || !process.env.GUILD_ID) {
-        console.log(`ℹ️ [AI Studio] Discord учетные данные (TOKEN/CLIENT_ID/GUILD_ID) не заданы. Пропуск удаленной регистрации ${commands.length} слэш-команд.`);
+    if (!config.TOKEN || !config.CLIENT_ID || !config.GUILD_ID) {
+        const missing = [];
+        if (!config.TOKEN) missing.push('TOKEN');
+        if (!config.CLIENT_ID) missing.push('CLIENT_ID');
+        if (!config.GUILD_ID) missing.push('GUILD_ID');
+        console.log(`ℹ️ [AI Studio] Не заданы параметры Discord: ${missing.join(', ')}. Пропуск удаленной регистрации ${commands.length} слэш-команд.`);
         return;
     }
 
-    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+    const rest = new REST({ version: '10' }).setToken(config.TOKEN);
     
     try {
-        console.log(`🔄 Регистрирую ${commands.length} команд...`);
+        console.log(`🔄 Регистрирую ${commands.length} команд для сервера ${config.GUILD_ID}...`);
         
         await rest.put(
-            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+            Routes.applicationGuildCommands(config.CLIENT_ID, config.GUILD_ID),
             { body: commands }
         );
         
-        console.log(`✅ Успешно зарегистрировано ${commands.length} команд!`);
+        console.log(`✅ Успешно зарегистрировано ${commands.length} команд в Discord!`);
     } catch (error) {
-        console.error('❌ Ошибка регистрации команд:', error.message);
+        console.error('❌ Ошибка регистрации команд в Discord:', error.message);
     }
 };
