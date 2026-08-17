@@ -1460,7 +1460,7 @@ async function finishDuel(client, interaction, duelId, duel) {
     const originalMessage = await channel.messages.fetch(duel.messageId);
     
     if (isWin) {
-        // ТОЛЬКО ПРИ ПОБЕДЕ - ГИФКА
+        // ПРИ ПОБЕДЕ - ГИФКА ПОБЕДЫ
         const gifData = getGifForEmbed('win');
         
         const resultEmbed = {
@@ -1475,14 +1475,17 @@ async function finishDuel(client, interaction, duelId, duel) {
         await originalMessage.edit({
             embeds: [resultEmbed],
             files: gifData ? [gifData.attachment] : [],
+            attachments: [],
             components: [],
             content: null
         });
     } else {
-        // НИЧЬЯ - БЕЗ ГИФКИ
+        // НИЧЬЯ
+        const gifData = getGifForEmbed('draw') || getGifForEmbed('lose');
         const resultEmbed = {
             title: embedTitle,
             color: 0x1A1C1E,
+            image: gifData ? { url: gifData.url } : null,
             fields: resultFields,
             timestamp: new Date(),
             footer: { text: 'Экономическая система | экзпоинты' }
@@ -1490,6 +1493,8 @@ async function finishDuel(client, interaction, duelId, duel) {
         
         await originalMessage.edit({
             embeds: [resultEmbed],
+            files: gifData ? [gifData.attachment] : [],
+            attachments: [],
             components: [],
             content: null
         });
